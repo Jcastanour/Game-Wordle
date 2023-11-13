@@ -1,6 +1,7 @@
 import random
 import pygame
 from settings import *
+import sys
 
 # JUEGO - GAME
 def diccionary(diccionario,palabra_oculta,nivel):
@@ -18,21 +19,24 @@ class Game:
         pygame.init()
         self.nivel = nivel
         self.WIDTH = 120*nivel
+        self.MARGIN_X = int((self.WIDTH - (self.nivel * (80 + 10))) / 2)
+        self.MARGIN_Y = int((800 - (6 * (80 + 10))) / 2)  
         self.screen = pygame.display.set_mode((self.WIDTH, 800))
         pygame.display.set_caption("JUEGO WORDLE")
         self.clock = pygame.time.Clock()
         self.lemario = {longitud: set() for longitud in range(4,9)} # Creamos un diccionario con la longitud de cada palabra, su valor
-        self.create_word_list()
-        self.letters_text = UIElement(100, 70, "Not Enough Letters", WHITE)
+        self.crea_lista_palabras()
+        self.letters_text = UIElement(self.MARGIN_X, 70, "pai te faltan letras", WHITE)
+        self.letters_text_noesta = UIElement(self.MARGIN_X, 70, "No esta en el lemario", WHITE)
                 
         
-    def create_word_list(self):
+    def crea_lista_palabras(self):
         #Abrimos el txt y añadimos a cada clave en el diccionario una palabra a su valor(set)
         with open ('palabras.txt','r',encoding='utf-8') as file:
             for linea in file:
                 palabra = ' '.join(linea.split()).rstrip().strip("-")
                 longitud = len(palabra)
-
+        
                 if longitud == 4:
                     self.lemario[4].add(palabra)  
                 if longitud == 5:
@@ -46,8 +50,6 @@ class Game:
 
     def nuevo(self):
         
-        self.MARGIN_X = int((self.WIDTH - (self.nivel * (80 + 10))) / 2)
-        self.MARGIN_Y = int((800 - (6 * (80 + 10))) / 2)  
         self.palabra_oculta = random.sample(self.lemario.get(self.nivel),1)[0].lower()
 
         self.diccionario = dict()
@@ -60,6 +62,7 @@ class Game:
         self.crear_casilla()
         self.flip = True
         self.faltan_letras = False
+        self.noesta = False
         self.timer = 0
 
     def crear_casilla(self):
@@ -76,23 +79,24 @@ class Game:
             self.update()
             self.draw()
 
+
     def update(self):
         self.add_letter()
 
     def add_letter(self):
-        # empty all the letter in the current row
-        for tile in self.casillas[self.fila_actual]:
-            tile.letter = ""
+        # empty all the letter in the current fila
+        for casilla in self.casillas[self.fila_actual]:
+            casilla.letter = ""
 
-        # add the letters typed to the current row
+        # add the letters typed to the current fila
         for i, letter in enumerate(self.text):
             self.casillas[self.fila_actual][i].letter = letter
             self.casillas[self.fila_actual][i].create_font()
 
     def draw_tiles(self):
-        for row in self.casillas:
-            for tile in row:
-                tile.draw(self.screen)
+        for fila in self.casillas:
+            for casilla in fila:
+                casilla.draw(self.screen)
 
     def draw(self):
         self.screen.fill(BGCOLOUR)
@@ -105,7 +109,20 @@ class Game:
                 self.timer = 0
         else:
             self.letters_text.fade_out()
-        self.letters_text.draw(self.screen)
+
+        if self.noesta:
+            self.timer += 1
+            self.letters_text_noesta.fade_in()
+            if self.timer > 90:
+                self.noesta = False
+                self.timer = 0
+        else:
+            self.letters_text_noesta.fade_out()
+
+        if self.noesta:
+            self.letters_text_noesta.draw(self.screen)
+        else:
+            self.letters_text.draw(self.screen)
 
         self.draw_tiles()
 
@@ -119,29 +136,15 @@ class Game:
         move = 3
         screen_copy = self.screen.copy()
         screen_copy.fill(BGCOLOUR)
-        for row in self.casillas:
-            for tile in row:
-                if row != self.casillas[self.fila_actual]:
-                    tile.draw(screen_copy)
-
-    # def rowbad_animation(self):
-    #     # row shaking if not enough letters is inputted
-    #     self.faltan_letras = True
-    #     start_pos = self.casillas[0][0].x
-    #     amount_move = 4
-    #     move = 3
-    #     screen_copy = self.screen.copy()
-    #     screen_copy.fill(BGCOLOUR)
-    #     for row in self.casillas:
-    #         for tile in row:
-    #             if row != self.casillas[self.fila_actual]:
-    #                 tile.draw(screen_copy)                
-
+        for fila in self.casillas:
+            for casilla in fila:
+                if fila != self.casillas[self.fila_actual]:
+                    casilla.draw(screen_copy)
         while True:
             while self.casillas[self.fila_actual][0].x < start_pos + amount_move:
                 self.screen.blit(screen_copy, (0, 0))
                 for casilla in self.casillas[self.fila_actual]:
-                    #casilla.x += move
+                    casilla.x += move
                     casilla.draw(self.screen)
                 self.clock.tick(60)
                 pygame.display.flip()
@@ -158,71 +161,119 @@ class Game:
             if amount_move < 0:
                 break
 
-    def box_animation(self):
-        # tile scale animation for every letter inserted
-        for tile in self.casillas[self.fila_actual]:
-            if tile.letter == "":
-                screen_copy = self.screen.copy()
-                for start, end, step in ((0, 6, 1), (0, -6, -1)):
-                    for size in range(start, end, 2*step):
-                        self.screen.blit(screen_copy, (0, 0))
-                        tile.x -= size
-                        tile.y -= size
-                        tile.width += size * 2
-                        tile.height += size * 2
-                        surface = pygame.Surface((tile.width, tile.height))
-                        surface.fill(BGCOLOUR)
-                        self.screen.blit(surface, (tile.x, tile.y))
-                        tile.draw(self.screen)
-                        pygame.display.flip()
-                        self.clock.tick(60)
-                    self.add_letter()
-                break
+    def draw_isnot(self):
+        self.screen.fill(BGCOLOUR)
+        # La palabra no esta en el lemario
+        if self.noesta:
+            self.timer += 1
+            self.letters_text_noesta.fade_in()
+            if self.timer > 90:
+                self.noesta = False
+                self.timer = 0
+        else:
+            self.letters_text_noesta.fade_out()
+        self.letters_text_noesta.draw(self.screen)
+        self.draw_tiles()
+        pygame.display.flip()
 
-    def reveal_animation(self, tile, colour):
+    def isnot_animation(self):
+        # Animacion de que no esta en el lemario
+        self.noesta = True
+        
+        start_pos = self.casillas[0][0].x
+        amount_move = 4
+        move = 3
+        screen_copy = self.screen.copy()
+        screen_copy.fill(BGCOLOUR)
+        for fila in self.casillas:
+            for casilla in fila:
+                if fila != self.casillas[self.fila_actual]:
+                    casilla.draw(screen_copy)
+        while True:
+            while self.casillas[self.fila_actual][0].x < start_pos + amount_move:
+                self.screen.blit(screen_copy, (0, 0))
+                for casilla in self.casillas[self.fila_actual]:
+                    casilla.x += move
+                    casilla.draw(self.screen)
+                self.clock.tick(60)
+                pygame.display.flip()
+
+            while self.casillas[self.fila_actual][0].x > start_pos - amount_move:
+                self.screen.blit(screen_copy, (0, 0))
+                for casilla in self.casillas[self.fila_actual]:
+                    casilla.x -= move
+                    casilla.draw(self.screen)
+                self.clock.tick(60)
+                pygame.display.flip()
+
+            amount_move -= 2
+            if amount_move < 0:
+                break
+#Hace un efecto innecesario
+    # def box_animation(self):
+    #     #animacion para cada letra que se ingreso
+    #     for casilla in self.casillas[self.fila_actual]:
+    #         if casilla.letter == "":
+    #             screen_copy = self.screen.copy()
+    #             for start, end, step in ((0, 6, 1), (0, -6, -1)):
+    #                 for size in range(start, end, 2*step):
+    #                     self.screen.blit(screen_copy, (0, 0))
+    #                     casilla.x -= size
+    #                     casilla.y -= size
+    #                     casilla.width += size * 2
+    #                     casilla.height += size * 2
+    #                     surface = pygame.Surface((casilla.width, casilla.height))
+    #                     surface.fill(BGCOLOUR)
+    #                     self.screen.blit(surface, (casilla.x, casilla.y))
+    #                     casilla.draw(self.screen)
+    #                     pygame.display.flip()
+    #                     self.clock.tick(60)
+    #                 self.add_letter()
+    #             break
+
+    def reveal_animation(self, casilla, colour):
         # reveal colours animation when user input the whole word
         screen_copy = self.screen.copy()
 
         while True:
-            surface = pygame.Surface((tile.width + 5, tile.height + 5))
+            surface = pygame.Surface((casilla.width + 5, casilla.height + 5))
             surface.fill(BGCOLOUR)
-            screen_copy.blit(surface, (tile.x, tile.y))
+            screen_copy.blit(surface, (casilla.x, casilla.y))
             self.screen.blit(screen_copy, (0, 0))
             if self.flip:
-                tile.y += 6
-                tile.height -= 12
-                tile.font_y += 4
-                tile.font_height = max(tile.font_height - 8, 0)
+                casilla.y += 6
+                casilla.height -= 12
+                casilla.font_y += 4
+                casilla.font_height = max(casilla.font_height - 8, 0)
             else:
-                tile.colour = colour
-                tile.y -= 6
-                tile.height += 12
-                tile.font_y -= 4
-                tile.font_height = min(tile.font_height + 8, tile.font_size)
-            if tile.font_height == 0:
+                casilla.colour = colour
+                casilla.y -= 6
+                casilla.height += 12
+                casilla.font_y -= 4
+                casilla.font_height = min(casilla.font_height + 8, casilla.font_size)
+            if casilla.font_height == 0:
                 self.flip = False
 
-            tile.draw(self.screen)
+            casilla.draw(self.screen)
             pygame.display.update()
             self.clock.tick(60)
 
-            if tile.font_height == tile.font_size:
+            if casilla.font_height == casilla.font_size:
                 self.flip = True
                 break
     
 
     def check_letters(self, ref_diccionario,nivel):
-
         for i in range(nivel):
             # print(ref_diccionario)
-            ##print(self.text)
+            #print(self.text)
             user_letter = self.text[i] #0
             colour = LIGHTGREY
             #print(self.palabra_oculta)
         
             if (user_letter in ref_diccionario) and ref_diccionario[user_letter] > 0 :
                 
-                if user_letter == self.palabra_oculta[i]: #0
+                if user_letter == self.palabra_oculta[i]: 
                     colour = GREEN
                     ref_diccionario[user_letter] -= 1
                 elif (user_letter in self.palabra_oculta) and (user_letter not in self.text[i+1:]): #0
@@ -230,7 +281,6 @@ class Game:
                     colour = YELLOW
                     ref_diccionario[user_letter] -= 1
 
-                
                 user_letter = ""
             self.reveal_animation(self.casillas[self.fila_actual][i], colour)    
 
@@ -239,39 +289,40 @@ class Game:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
-                quit(0)
+                sys.exit()
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN:
                     if len(self.text) == self.nivel:
-                        # check all letters
-                        diccionary(self.diccionario,self.palabra_oculta,self.nivel)
-                        self.check_letters(self.diccionario,self.nivel)
-                        # if self.text not in self.lemario.get(self.nivel):
-                        #     print("no puede")
-                        # else:
-                        #     self.check_letters(self.diccionario,self.nivel)
+                        #Verificar todas las letras y si estan en el lemario
+                        if self.text in self.lemario.get(self.nivel):
+                            diccionary(self.diccionario,self.palabra_oculta,self.nivel)
+                            self.check_letters(self.diccionario,self.nivel)
+                        else:
+                            self.isnot_animation()
+                            print("no puede")
+                            self.text = ""
+                            continue
 
-
-                        # if the text is correct or the player has used all his turns
+                        # Si adivino o agoto los turnos
                         if self.text == self.palabra_oculta or self.fila_actual + 1 == 6:
                             # player lose, lose message is sent
                             if self.text != self.palabra_oculta:
-                                self.end_screen_text = UIElement(50, 700, f"THE WORD WAS: {self.palabra_oculta}", WHITE)
+                                self.end_screen_text = UIElement(self.MARGIN_X, 700, f"La palabra era: {self.palabra_oculta}", WHITE)
 
                             # player win, send win message
                             else:
-                                self.end_screen_text = UIElement(50, 700, "YOU GUESSED RIGHT", WHITE)
+                                self.end_screen_text = UIElement(self.MARGIN_X, 700, "Que hpta mas teso", WHITE)
 
                             # restart the game
                             self.playing = False
                             self.end_screen()
                             break
-
-                        self.fila_actual += 1
-                        self.text = ""
+                        else:       
+                            self.fila_actual += 1
+                            self.text = ""
                     else:
-                        # row animation, not enough letters message
+                        # animacion de no hay letras
                         self.row_animation()
                         
 
@@ -281,17 +332,15 @@ class Game:
                 else:
                     if len(self.text) < self.nivel and event.unicode.isalpha():
                         self.text += event.unicode.lower()
-                        self.box_animation()
+                        #self.box_animation()
                         
 
     def end_screen(self):
-        play_again = UIElement(50, 750, "PRESS ENTER TO PLAY AGAIN", WHITE, 30)
+        play_again = UIElement(self.MARGIN_X, 750, "Enter para volver a jugar", WHITE, 30)
         while True:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    pygame.quit()
-                    quit(0)
-
+                    sys.exit()
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_RETURN:
                         return

@@ -8,6 +8,7 @@ LIGHTGREY = (100, 100, 100)
 GREEN = (0, 200, 0)
 YELLOW = (200, 200, 0)
 BGCOLOUR = (40, 40, 40)
+BLUE = (60, 100, 150)
 
 class Casilla:
     def __init__(self, x, y, letter="", colour=None):
@@ -36,7 +37,7 @@ class Casilla:
             screen.blit(letter, (self.font_x, self.font_y)) #se dibuja la letra en las coordenadas exactas
 
 
-class UIElement:
+class UIElement: #animaciones
     def __init__(self, x, y, text, colour, font_size=40):
         self.x, self.y = x, y
         self.text = text

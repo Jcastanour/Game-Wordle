@@ -1,16 +1,14 @@
 # Modulos y librerias importados:
 import pygame
 import sys
-from juego import *
+from Game import *
 
 # Inicialización de las funcionalidades de pygame
 pygame.init()
 WIDTH = 600
 HEIGHT = 800
 
-BLUE = (60, 100, 150)
 #Imagenes
-
 jugar_imagen = pygame.image.load("jugar.png")
 exit_imagen = pygame.image.load("exit.png")
 cuatro_imagen = pygame.image.load("4.png")
@@ -29,9 +27,17 @@ class Escena:
     JUEGO = 2
 
 def menu_principal():
+    global running
+    global escena
     screen.fill(BLUE)
-    screen.blit(jugar_imagen, (200, 200))
-    screen.blit(exit_imagen, (200, 400))
+    jugar = screen.blit(jugar_imagen, (200, 200))
+    exit = screen.blit(exit_imagen, (200, 400))
+
+    if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            if jugar.collidepoint(event.pos):
+                escena = Escena.MENU_JUGAR
+            if exit.collidepoint(event.pos):
+                running = False
 
 # Definimos botones que se inicializan al entrar en el menu de jugar
 def menu_jugar():
@@ -39,20 +45,12 @@ def menu_jugar():
     global running
     global nivel
 
-    dificultad_4 = pygame.Rect(250, 300, 200, 100)
-    dificultad_5 = pygame.Rect(250, 450, 200, 100)
-    dificultad_6 = pygame.Rect(250, 600, 200, 100)
-    dificultad_7 = pygame.Rect(250, 750, 200, 100)
-    dificultad_8 = pygame.Rect(250, 900, 200, 100)
-    volver = pygame.Rect(40, 650, 200, 100)
-
     dificultad_4 = screen.blit(cuatro_imagen,(300, 50))
     dificultad_5 = screen.blit(cinco_imagen,(300, 200))
     dificultad_6 = screen.blit(seis_imagen,(300, 350))
     dificultad_7 = screen.blit(siete_imagen,(300, 500))
     dificultad_8 = screen.blit(ocho_imagen,(300, 650))
     volver = screen.blit(exit_imagen,(40, 650))
-
     
     # Gestion de eventos (menu dificultades):
     for event in pygame.event.get():
@@ -114,33 +112,14 @@ while running:
     screen.fill(BLUE)
 
     if escena == Escena.MENU_PRINCIPAL:
+        # Detectar clic en el botón Jugar y salir
         menu_principal()
-        # Detectar clic en el botón Jugar
-        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-            if pygame.Rect(200, 200, 200, 100).collidepoint(event.pos):
-                escena = Escena.MENU_JUGAR
-
     elif escena == Escena.MENU_JUGAR:
+        #Botones de niveles
         menu_jugar()
-        # Aquí también, detectar clic en el botón Jugar y cambiar la escena
-        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-            if pygame.Rect(250, 300, 200, 100).collidepoint(event.pos):
-                escena = Escena.JUEGO
-                nivel = 4
-            elif pygame.Rect(250, 450, 200, 100).collidepoint(event.pos):
-                escena = Escena.JUEGO
-                nivel = 5
-            elif pygame.Rect(250, 600, 200, 100).collidepoint(event.pos):
-                escena = Escena.JUEGO
-                nivel = 6
-            elif pygame.Rect(250, 750, 200, 100).collidepoint(event.pos):
-                escena = Escena.JUEGO
-                nivel = 7
-            elif pygame.Rect(250, 900, 200, 100).collidepoint(event.pos):
-                escena = Escena.JUEGO
-                nivel = 8
 
     elif escena == Escena.JUEGO:
+        #Juego y logica
         juego()
 
     # Actualizar la pantalla
