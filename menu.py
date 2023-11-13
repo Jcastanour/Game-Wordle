@@ -1,25 +1,16 @@
 # Modulos y librerias importados:
 import pygame
 import sys
+from juego import *
+
 # Inicialización de las funcionalidades de pygame
 pygame.init()
+WIDTH = 600
+HEIGHT = 800
 
-# Inicializamos la pantalla con su respectivo tamaño(px):
-screen_width = 600
-screen_height = 800
+BLUE = (60, 100, 150)
+#Imagenes
 
-screen = pygame.display.set_mode((screen_width, screen_height))
-pygame.display.set_caption("Wordle")
-
-
-# Definimos los colores:
-azul = (60, 100, 150)
-gris = (91, 91, 91)
-amarillo = (200, 200, 91)
-verde = (0, 200, 100)
-negro = (0,0,0)
-
-# Definimos las fuentes(texto):
 jugar_imagen = pygame.image.load("jugar.png")
 exit_imagen = pygame.image.load("exit.png")
 cuatro_imagen = pygame.image.load("4.png")
@@ -28,22 +19,25 @@ seis_imagen = pygame.image.load("6.png")
 siete_imagen = pygame.image.load("7.png")
 ocho_imagen = pygame.image.load("8.png")
 
+# Inicializamos la pantalla con su respectivo tamaño(px):
+screen = pygame.display.set_mode((WIDTH, HEIGHT)) 
+pygame.display.set_caption("Menu principal")
+
 class Escena:
     MENU_PRINCIPAL = 0
     MENU_JUGAR = 1
     JUEGO = 2
 
 def menu_principal():
-    screen.fill(azul)
+    screen.fill(BLUE)
     screen.blit(jugar_imagen, (200, 200))
     screen.blit(exit_imagen, (200, 400))
 
-# Definimos botones:
 # Definimos botones que se inicializan al entrar en el menu de jugar
 def menu_jugar():
     global escena
     global running
-    global cantidad_letras
+    global nivel
 
     dificultad_4 = pygame.Rect(250, 300, 200, 100)
     dificultad_5 = pygame.Rect(250, 450, 200, 100)
@@ -60,7 +54,7 @@ def menu_jugar():
     volver = screen.blit(exit_imagen,(40, 650))
 
     
-    # Gestion de eventos (meni dificultades):
+    # Gestion de eventos (menu dificultades):
     for event in pygame.event.get():
         # 1.Salida con la x superior izquierda
         if event.type == pygame.QUIT:
@@ -71,26 +65,25 @@ def menu_jugar():
                 escena = Escena.MENU_PRINCIPAL
             elif dificultad_4.collidepoint(event.pos):
                 escena = Escena.JUEGO
-                cantidad_letras = 4
+                nivel = 4
             elif dificultad_5.collidepoint(event.pos):
                 escena = Escena.JUEGO
-                cantidad_letras = 5
+                nivel = 5
             elif dificultad_6.collidepoint(event.pos):
                 escena = Escena.JUEGO
-                cantidad_letras = 6
+                nivel = 6
             elif dificultad_7.collidepoint(event.pos):
                 escena = Escena.JUEGO
-                cantidad_letras = 7
+                nivel = 7
             elif dificultad_8.collidepoint(event.pos):
                 escena = Escena.JUEGO
-                cantidad_letras = 8
-    print(escena)
+                nivel = 8
             
         
 def juego():
     global running
     global escena
-    global cantidad_letras
+    global nivel
 
     while True:
         for event in pygame.event.get():
@@ -99,15 +92,10 @@ def juego():
                 escena = Escena.MENU_PRINCIPAL
                 return
 
-        # Lógica de juego aquí (por ejemplo, manejo de eventos, actualizaciones, etc.)
-        # En este ejemplo, simplemente dibujamos la pantalla y mostramos la cantidad de letras
-        screen.fill(negro)
-        pygame.draw.rect(screen, azul, (100, 100, 400, 200))
-        pygame.draw.rect(screen, azul, (100, 400, 400, 200))
-        pygame.font.init()
-        font = pygame.font.SysFont('Comic Sans MS', 30)
-        text = font.render(f"Cantidad de letras: {cantidad_letras}", True, (255, 255, 255))
-        screen.blit(text, (150, 250))
+        game = Game(nivel)   
+        game.nuevo()
+        game.run()
+        print(nivel)
         pygame.display.flip()
 
 
@@ -123,7 +111,7 @@ while running:
         if event.type == pygame.QUIT:
             running = False
 
-    screen.fill(azul)
+    screen.fill(BLUE)
 
     if escena == Escena.MENU_PRINCIPAL:
         menu_principal()
@@ -138,19 +126,19 @@ while running:
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             if pygame.Rect(250, 300, 200, 100).collidepoint(event.pos):
                 escena = Escena.JUEGO
-                cantidad_letras = 4
+                nivel = 4
             elif pygame.Rect(250, 450, 200, 100).collidepoint(event.pos):
                 escena = Escena.JUEGO
-                cantidad_letras = 5
+                nivel = 5
             elif pygame.Rect(250, 600, 200, 100).collidepoint(event.pos):
                 escena = Escena.JUEGO
-                cantidad_letras = 6
+                nivel = 6
             elif pygame.Rect(250, 750, 200, 100).collidepoint(event.pos):
                 escena = Escena.JUEGO
-                cantidad_letras = 7
+                nivel = 7
             elif pygame.Rect(250, 900, 200, 100).collidepoint(event.pos):
                 escena = Escena.JUEGO
-                cantidad_letras = 8
+                nivel = 8
 
     elif escena == Escena.JUEGO:
         juego()

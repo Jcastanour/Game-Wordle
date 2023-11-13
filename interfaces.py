@@ -1,6 +1,25 @@
-import pygame
 
-#INTERFACES
+def actualizar_nivel_local(nuevo_nivel):
+    global nivel
+    nivel = nuevo_nivel
+
+def actualizar_nivel_dinamico(nuevo_nivel):
+    global nivel
+    nivel = nuevo_nivel
+    from nivel import actualizar_nivel
+    actualizar_nivel(nuevo_nivel)
+
+WIDTH = 120*nivel
+HEIGHT = 800
+
+FPS = 60
+
+casilla_size = 80
+espaciado = 10
+
+MARGIN_X = int((WIDTH - (nivel * (casilla_size + espaciado))) / 2)
+MARGIN_Y = int((HEIGHT - (6 * (casilla_size + espaciado))) / 2)
+
 # COLORS (r, g, b)
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
@@ -9,13 +28,17 @@ GREEN = (0, 200, 0)
 YELLOW = (200, 200, 0)
 BGCOLOUR = (40, 40, 40)
 
+
+title = "Wordle"
+
+#clases para el tema grafico
 class Casilla:
     def __init__(self, x, y, letter="", colour=None):
         self.x, self.y = x, y
         self.letter = letter
         self.colour = colour
-        self.width, self.height = 80, 80
-        self.font_size = int(60 * (80/100))
+        self.width, self.height = casilla_size, casilla_size
+        self.font_size = int(60 * (casilla_size/100))
         self.create_font()
 
     def create_font(self):
@@ -68,3 +91,4 @@ class UIElement:
         self.text_surface = self.original_surface.copy()
         self.alpha_surface.fill((255, 255, 255, self.transparencia))
         self.text_surface.blit(self.alpha_surface, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
+
