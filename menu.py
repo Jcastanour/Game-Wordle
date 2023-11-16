@@ -82,7 +82,11 @@ def juego():
     global running
     global escena
     global nivel
+    global ganadas
+    global perdidas
 
+    ganadas = 0
+    perdidas = 0
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -93,12 +97,15 @@ def juego():
         game = Game(nivel)   
         game.nuevo()
         game.run()
+        ganadas += game.ganadas
+        perdidas += game.perdidas 
         print(nivel)
+        print(perdidas,ganadas)
         pygame.display.flip()
 
 
-# Bucle principal del juego:
 running = True
+# Bucle principal del juego:
 # Variable que me facilita el primer menu y el segundo menu
 escena = Escena.MENU_PRINCIPAL
 while running:

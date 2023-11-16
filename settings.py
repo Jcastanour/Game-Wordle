@@ -38,7 +38,7 @@ class Casilla:
 
 
 class UIElement: #animaciones
-    def __init__(self, x, y, text, colour, font_size=40):
+    def __init__(self, x, y, text, colour, font_size=30):
         self.x, self.y = x, y
         self.text = text
         self.colour = colour

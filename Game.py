@@ -2,9 +2,13 @@ import random
 import pygame
 from settings import *
 import sys
+from collections import deque
+
+ganadas = 0
+perdidas = 0
 
 # JUEGO - GAME
-def diccionary(diccionario,palabra_oculta,nivel):
+def diccionary(diccionario,palabra_oculta,nivel): #o(1)
     for i in range(nivel):
         diccionario[palabra_oculta[i]] = 0
         
@@ -17,6 +21,8 @@ def diccionary(diccionario,palabra_oculta,nivel):
 class Game:
     def __init__(self,nivel):
         pygame.init()
+        self.ganadas = 0
+        self.perdidas = 0
         self.nivel = nivel
         self.WIDTH = 120*nivel
         self.MARGIN_X = int((self.WIDTH - (self.nivel * (80 + 10))) / 2)
@@ -28,13 +34,14 @@ class Game:
         self.crea_lista_palabras()
         self.letters_text = UIElement(self.MARGIN_X, 70, "pai te faltan letras", WHITE)
         self.letters_text_noesta = UIElement(self.MARGIN_X, 70, "No esta en el lemario", WHITE)
+        self.ganadas = 0
                 
         
     def crea_lista_palabras(self):
         #Abrimos el txt y añadimos a cada clave en el diccionario una palabra a su valor(set)
         with open ('palabras.txt','r',encoding='utf-8') as file:
             for linea in file:
-                palabra = ' '.join(linea.split()).rstrip().strip("-")
+                palabra = ' '.join(linea.split()).rstrip().strip("-") 
                 longitud = len(palabra)
         
                 if longitud == 4:
@@ -50,25 +57,25 @@ class Game:
 
     def nuevo(self):
         
-        self.palabra_oculta = random.sample(self.lemario.get(self.nivel),1)[0].lower()
+        self.palabra_oculta = random.sample(self.lemario.get(self.nivel),1)[0].lower() #o(1)
 
         self.diccionario = dict()
-        diccionary(self.diccionario,self.palabra_oculta,self.nivel)
+        diccionary(self.diccionario,self.palabra_oculta,self.nivel) #o(1)
 
-        #print(self.palabra_oculta)
+        print(self.palabra_oculta)
         self.text = ""
         self.fila_actual = 0
-        self.casillas = []
+        self.casillas = deque([[],[],[],[],[],[]]) # siempre 6, 6 filas
         self.crear_casilla()
         self.flip = True
         self.faltan_letras = False
         self.noesta = False
         self.timer = 0
 
-    def crear_casilla(self):
-        for row in range(6):
-            self.casillas.append([])
-            for col in range(self.nivel):
+    def crear_casilla(self): #[[],[],[],[],[],[]]
+        for row in range(6): #siempre 6 veces,6 filas
+            #self.casillas.append([])
+            for col in range(self.nivel): #siempre el nivel, las columnas
                 self.casillas[row].append(Casilla((col * (80 + 10)) + self.MARGIN_X, (row * (80 + 10)) + self.MARGIN_Y))
 
     def run(self):
@@ -117,6 +124,7 @@ class Game:
                 self.noesta = False
                 self.timer = 0
         else:
+            pass
             self.letters_text_noesta.fade_out()
 
         if self.noesta:
@@ -209,30 +217,9 @@ class Game:
             amount_move -= 2
             if amount_move < 0:
                 break
-#Hace un efecto innecesario
-    # def box_animation(self):
-    #     #animacion para cada letra que se ingreso
-    #     for casilla in self.casillas[self.fila_actual]:
-    #         if casilla.letter == "":
-    #             screen_copy = self.screen.copy()
-    #             for start, end, step in ((0, 6, 1), (0, -6, -1)):
-    #                 for size in range(start, end, 2*step):
-    #                     self.screen.blit(screen_copy, (0, 0))
-    #                     casilla.x -= size
-    #                     casilla.y -= size
-    #                     casilla.width += size * 2
-    #                     casilla.height += size * 2
-    #                     surface = pygame.Surface((casilla.width, casilla.height))
-    #                     surface.fill(BGCOLOUR)
-    #                     self.screen.blit(surface, (casilla.x, casilla.y))
-    #                     casilla.draw(self.screen)
-    #                     pygame.display.flip()
-    #                     self.clock.tick(60)
-    #                 self.add_letter()
-    #             break
 
     def reveal_animation(self, casilla, colour):
-        # reveal colours animation when user input the whole word
+        # revela por colores
         screen_copy = self.screen.copy()
 
         while True:
@@ -265,18 +252,21 @@ class Game:
 
     def check_letters(self, ref_diccionario,nivel):
         for i in range(nivel):
-            # print(ref_diccionario)
-            #print(self.text)
-            user_letter = self.text[i] #0
+            #print(ref_diccionario)
+            #print(self.lemario.get(8))
+            user_letter = self.text[i] #0 
+            #print(user_letter)
             colour = LIGHTGREY
-            #print(self.palabra_oculta)
+            print(self.palabra_oculta)
         
             if (user_letter in ref_diccionario) and ref_diccionario[user_letter] > 0 :
                 
                 if user_letter == self.palabra_oculta[i]: 
                     colour = GREEN
                     ref_diccionario[user_letter] -= 1
-                elif (user_letter in self.palabra_oculta) and (user_letter not in self.text[i+1:]): #0
+                
+
+                elif (user_letter in self.palabra_oculta): #and (user_letter not in self.text[i+1:]): #0
                     # print(self.text[i+1:])
                     colour = YELLOW
                     ref_diccionario[user_letter] -= 1
@@ -308,14 +298,17 @@ class Game:
                         if self.text == self.palabra_oculta or self.fila_actual + 1 == 6:
                             # player lose, lose message is sent
                             if self.text != self.palabra_oculta:
-                                self.end_screen_text = UIElement(self.MARGIN_X, 700, f"La palabra era: {self.palabra_oculta}", WHITE)
+                                self.end_screen_text = UIElement(self.MARGIN_X - 20, 700, f"La palabra era: {self.palabra_oculta}", WHITE)
+                                self.perdidas +=1
 
                             # player win, send win message
                             else:
-                                self.end_screen_text = UIElement(self.MARGIN_X, 700, "Que hpta mas teso", WHITE)
+                                self.end_screen_text = UIElement(self.MARGIN_X - 20, 700, "Ganaste", WHITE)
+                                self.ganadas +=1
 
                             # restart the game
                             self.playing = False
+                            
                             self.end_screen()
                             break
                         else:       
@@ -336,7 +329,7 @@ class Game:
                         
 
     def end_screen(self):
-        play_again = UIElement(self.MARGIN_X, 750, "Enter para volver a jugar", WHITE, 30)
+        play_again = UIElement(self.MARGIN_X - 20, 750, "Enter para volver a jugar", WHITE, 30)
         while True:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
