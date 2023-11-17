@@ -2271,6 +2271,7 @@ pantalla
 pantalon
 pantalones
 papa
+papayo
 papel
 papi
 paquete
